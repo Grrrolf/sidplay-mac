@@ -1,0 +1,27 @@
+# OS & Editor
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+
+# Build & Derived Data
+build/
+DerivedData/
+.build/
+*.dSYM
+*~.nib
+
+# Xcode User Data & Schemes (Keep shared schemes in xcshareddata)
+xcuserdata/
+*.xcuserstate
+*.pbxuser
+*.perspectivev3
+*.mode1v3
+*.mode2v3
+*.xcbkptlist
+
+# Private Offline Documentation & Scratch Files
+IDEAS.md
+scratch/
+tmp/
