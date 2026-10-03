@@ -210,6 +210,8 @@ void PlayerLibSidplay::initEmuEngine(PlaybackSettings *settings)
 		                          mPlaybackSettings.mForceSidModel);
 	}
 
+	mSpatialEngine.init(mPlaybackSettings.mFrequency);
+
 	applyFilterSettings();
 
 	if (mMixBuffer.size() < 16384) {
@@ -237,6 +239,7 @@ void PlayerLibSidplay::applyFilterSettings()
 void PlayerLibSidplay::updateSampleRate(int newSampleRate)
 {
 	mPlaybackSettings.mFrequency = newSampleRate;
+	mSpatialEngine.init(newSampleRate);
 	if (mCurrentEngine) {
 		mCurrentEngine->updateSampleRate(newSampleRate);
 	}
@@ -450,6 +453,34 @@ void PlayerLibSidplay::fillBuffer(void* buffer, int len)
 		mAudioFifo.erase(mAudioFifo.begin(), mAudioFifo.begin() + shortsToErase);
 		mSamplePhase = phase - framesConsumed;
 	}
+
+	mSpatialEngine.process(outPtr, requestedShorts / 2);
+}
+
+// ----------------------------------------------------------------------------
+void PlayerLibSidplay::setStereoWidth(float width)
+{
+	std::lock_guard<std::recursive_mutex> lock(mAudioMutex);
+	mSpatialEngine.setStereoWidth(width);
+}
+
+// ----------------------------------------------------------------------------
+float PlayerLibSidplay::getStereoWidth() const
+{
+	return mSpatialEngine.getStereoWidth();
+}
+
+// ----------------------------------------------------------------------------
+void PlayerLibSidplay::setBassAnchorEnabled(bool enabled)
+{
+	std::lock_guard<std::recursive_mutex> lock(mAudioMutex);
+	mSpatialEngine.setBassAnchorEnabled(enabled);
+}
+
+// ----------------------------------------------------------------------------
+bool PlayerLibSidplay::getBassAnchorEnabled() const
+{
+	return mSpatialEngine.isBassAnchorEnabled();
 }
 
 // ----------------------------------------------------------------------------

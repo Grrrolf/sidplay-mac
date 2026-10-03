@@ -9,6 +9,7 @@
 
 #include "ISidEngine.h"
 #include "EngineSidplayFP.h"
+#include "SpatialEngine.h"
 #include <sidplayfp/SidDatabase.h>
 
 #include "AudioDriver.h"
@@ -108,6 +109,12 @@ public:
 	void setVoiceVolume(int voice, float volume);
 	void setVoiceVolume(unsigned int chip, unsigned int voice, float volume);
 	void setVoiceMute(unsigned int chip, unsigned int voice, bool mute);
+
+	// Spatial Audio Engine
+	void setStereoWidth(float width);
+	float getStereoWidth() const;
+	void setBassAnchorEnabled(bool enabled);
+	bool getBassAnchorEnabled() const;
 	
 	void setFilterType(SPFilterType type);
 	inline SPFilterType getFilterType() const { return mPlaybackSettings.mFilterType; }
@@ -223,6 +230,8 @@ private:
 
 	float mVoiceVolumes[4][3];
 	bool mVoiceMutes[4][3];
+
+	SpatialEngine mSpatialEngine;
 
 	std::vector<short> mMixBuffer;
 	std::vector<short> mAudioFifo;

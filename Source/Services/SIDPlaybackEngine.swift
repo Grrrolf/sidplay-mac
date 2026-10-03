@@ -21,6 +21,8 @@ public protocol SIDPlaybackEngine: AnyObject {
     var playbackSeconds: Int { get }
     var volume: Float { get set }
     var tempo: Int { get set }
+    var stereoWidth: Float { get set }
+    var bassAnchorEnabled: Bool { get set }
     
     // Metadata
     var metadata: SIDTuneMetadata? { get }

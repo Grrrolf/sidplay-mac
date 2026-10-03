@@ -10,6 +10,18 @@
 
 @implementation SIDEngineBridge
 
+@synthesize stereoWidth = _stereoWidth;
+@synthesize bassAnchorEnabled = _bassAnchorEnabled;
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _stereoWidth = 1.0f;
+        _bassAnchorEnabled = YES;
+    }
+    return self;
+}
+
 + (instancetype)sharedBridge {
     static SIDEngineBridge *bridge = nil;
     static dispatch_once_t onceToken;

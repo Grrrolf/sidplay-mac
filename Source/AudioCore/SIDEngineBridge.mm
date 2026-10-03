@@ -442,6 +442,28 @@ static SIDEngineBridge *sSharedBridge = nil;
     }
 }
 
+// MARK: - Spatial Audio Settings
+
+- (float)stereoWidth {
+    return _player ? _player->getStereoWidth() : 1.0f;
+}
+
+- (void)setStereoWidth:(float)stereoWidth {
+    if (_player) {
+        _player->setStereoWidth(stereoWidth);
+    }
+}
+
+- (BOOL)bassAnchorEnabled {
+    return _player ? _player->getBassAnchorEnabled() : YES;
+}
+
+- (void)setBassAnchorEnabled:(BOOL)bassAnchorEnabled {
+    if (_player) {
+        _player->setBassAnchorEnabled(bassAnchorEnabled);
+    }
+}
+
 // MARK: - Metadata
 
 - (NSString *)title {

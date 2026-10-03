@@ -295,6 +295,31 @@ public struct SIDPreferencesView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         
+        // Spatial Audio Processing
+        GroupBox(label: Label("Spatial Processing & Bass Anchor", systemImage: "headphones")) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("Stereo Soundstage Width:")
+                        .font(.system(size: 12))
+                    Spacer(minLength: 16)
+                    Slider(value: $player.stereoWidth, in: 0.0...3.0, step: 0.05)
+                        .frame(width: 200)
+                    Text(String(format: "%.1fx", player.stereoWidth))
+                        .font(.system(size: 12, design: .monospaced))
+                        .frame(width: 50, alignment: .trailing)
+                }
+                
+                Toggle("Enable 180 Hz Mono Bass Anchor (Recommended for Headphones)", isOn: $player.bassAnchorEnabled)
+                    .font(.system(size: 12))
+                
+                Text("Summing sub-180 Hz frequencies to mono prevents ear fatigue on headphones while preserving wide leads and ambient stereo spread.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(6)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        
         // Hardware Defaults
         GroupBox(label: Label("Hardware Defaults & Preferences", systemImage: "slider.horizontal.3")) {
             VStack(alignment: .leading, spacing: 10) {

@@ -73,6 +73,10 @@ typedef NS_ENUM(NSInteger, SIDEngineBackend) {
 @property (nonatomic, assign) NSInteger distortionHeadroom;
 @property (nonatomic, assign) NSInteger optimization;
 
+// MARK: - Spatial Audio Settings
+@property (nonatomic, assign) float stereoWidth;
+@property (nonatomic, assign) BOOL bassAnchorEnabled;
+
 // MARK: - Current Tune Metadata
 @property (nonatomic, readonly, copy) NSString *title;
 @property (nonatomic, readonly, copy) NSString *author;

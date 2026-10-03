@@ -39,7 +39,8 @@ public struct TestRunner {
             ("Playback Queue & Random Selection", PlaybackQueueTests.runAll),
             ("UI Layout & Geometry Regression (Capsule / Pickers)", UILayoutRegressionTests.runAll),
             ("Control Menu Validation & Volume Clamping", ControlMenuValidationTests.runAll),
-            ("Browser Navigation & History Stacks", BrowserNavigationTests.runAll)
+            ("Browser Navigation & History Stacks", BrowserNavigationTests.runAll),
+            ("Spatial Audio DSP & Stereo Width", SpatialAudioTests.runAll)
         ]
         
         var totalPassed = 0

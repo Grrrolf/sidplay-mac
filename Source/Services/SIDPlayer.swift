@@ -151,6 +151,32 @@ public final class SIDPlayer: NSObject, ObservableObject, SIDPlaybackEngine {
         }
     }
 
+    // MARK: - Spatial Audio Controls
+
+    @Published public var stereoWidth: Float = 1.0 {
+        didSet {
+            let clamped = min(max(stereoWidth, 0.0), 3.0)
+            if clamped != stereoWidth {
+                stereoWidth = clamped
+                return
+            }
+            bridge.stereoWidth = stereoWidth
+            UserDefaults.standard.set(stereoWidth, forKey: "SPSpatialStereoWidth")
+        }
+    }
+
+    @Published public var bassAnchorEnabled: Bool = true {
+        didSet {
+            bridge.bassAnchorEnabled = bassAnchorEnabled
+            UserDefaults.standard.set(bassAnchorEnabled, forKey: "SPSpatialBassAnchorEnabled")
+        }
+    }
+
+    public func resetSpatialSettings() {
+        stereoWidth = 1.0
+        bassAnchorEnabled = true
+    }
+
     /// Selects a filter preset and configures all related sliders to the preset defaults
     public func selectFilterPreset(_ preset: SIDFilterType) {
         filterType = preset
@@ -286,6 +312,21 @@ public final class SIDPlayer: NSObject, ObservableObject, SIDPlaybackEngine {
         self.distortionEnabled = bridge.distortionEnabled
         self.distortionRate = Int(bridge.distortionRate)
         self.distortionHeadroom = Int(bridge.distortionHeadroom)
+
+        if let savedWidth = UserDefaults.standard.object(forKey: "SPSpatialStereoWidth") as? Float {
+            self.stereoWidth = savedWidth
+            self.bridge.stereoWidth = savedWidth
+        } else {
+            self.stereoWidth = bridge.stereoWidth
+        }
+
+        if let savedAnchor = UserDefaults.standard.object(forKey: "SPSpatialBassAnchorEnabled") as? Bool {
+            self.bassAnchorEnabled = savedAnchor
+            self.bridge.bassAnchorEnabled = savedAnchor
+        } else {
+            self.bassAnchorEnabled = bridge.bassAnchorEnabled
+        }
+
         self.refreshVoiceState()
     }
     

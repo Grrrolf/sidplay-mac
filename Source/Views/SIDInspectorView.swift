@@ -20,6 +20,7 @@ public struct SIDInspectorView: View {
     @State private var oscilloscopeExpanded = true
     @State private var registersExpanded = true
     @State private var mixerExpanded = true
+    @State private var spatialExpanded = true
     @State private var filterExpanded = true
     @State private var distortionExpanded = true
     
@@ -407,7 +408,88 @@ public struct SIDInspectorView: View {
                     
                     Divider()
                     
-                    // MARK: - 5. Emulation & Filter Section
+                    // MARK: - 5. Spatial Audio & Stereo Width
+                    DisclosureGroup(isExpanded: $spatialExpanded) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            // Stereo Width Slider
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack {
+                                    Text("Stereo Width:")
+                                        .font(.system(size: 10, weight: .semibold))
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Text(stereoWidthLabel(player.stereoWidth))
+                                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                                        .foregroundColor(player.stereoWidth > 1.05 ? .accentColor : .primary)
+                                }
+                                FixedSizeSlider(
+                                    value: $player.stereoWidth,
+                                    in: 0.0...3.0,
+                                    trackHeight: 4,
+                                    knobSize: 12
+                                )
+                                HStack {
+                                    Text("Mono")
+                                        .font(.system(size: 8))
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Text("Native")
+                                        .font(.system(size: 8))
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Text("+200%")
+                                        .font(.system(size: 8))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            
+                            Divider()
+                                .padding(.vertical, 2)
+                            
+                            // Mono Bass Anchor Toggle
+                            Toggle(isOn: $player.bassAnchorEnabled) {
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("Mono Bass Anchor (180 Hz)")
+                                        .font(.system(size: 10, weight: .semibold))
+                                    Text("Centers sub-bass on headphones")
+                                        .font(.system(size: 9))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            .toggleStyle(.checkbox)
+                            
+                            // Reset Button
+                            HStack {
+                                Spacer()
+                                Button(action: {
+                                    player.resetSpatialSettings()
+                                }) {
+                                    Text("Reset Spatial")
+                                        .font(.system(size: 10))
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .disabled(player.stereoWidth == 1.0 && player.bassAnchorEnabled)
+                            }
+                            .padding(.top, 2)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 4)
+                    } label: {
+                        HStack(spacing: 5) {
+                            Text("Spatial Audio")
+                                .font(.system(size: 11, weight: .bold))
+                            if player.stereoWidth != 1.0 || player.bassAnchorEnabled {
+                                Circle()
+                                    .fill(Color.accentColor)
+                                    .frame(width: 5, height: 5)
+                            }
+                        }
+                    }
+
+                    Divider()
+                    
+                    // MARK: - 6. Emulation & Filter Section
                     DisclosureGroup(isExpanded: $filterExpanded) {
                         VStack(alignment: .leading, spacing: 10) {
                             // Emulation Engine Core (A/B Testing Switcher)
@@ -833,6 +915,20 @@ public struct SIDInspectorView: View {
             return "Custom tuned filter response"
         @unknown default:
             return "Standard filter response"
+        }
+    }
+
+    private func stereoWidthLabel(_ width: Float) -> String {
+        if width < 0.05 {
+            return "Mono (0%)"
+        } else if abs(width - 1.0) < 0.05 {
+            return "Native (1.0x)"
+        } else if width > 1.0 {
+            let pct = (width - 1.0) * 100
+            return String(format: "+%.0f%% (%.1fx)", pct, width)
+        } else {
+            let pct = width * 100
+            return String(format: "%.0f%% (%.1fx)", pct, width)
         }
     }
 }

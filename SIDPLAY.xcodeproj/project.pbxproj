@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E00100020000000000000022 /* SpatialEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E00100010000000000000022 /* SpatialEngine.cpp */; };
 		E00100020000000000000012 /* EngineSidplayFP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E00100010000000000000012 /* EngineSidplayFP.cpp */; };
 		E00300020000000000000001 /* BreadcrumbBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E00300010000000000000001 /* BreadcrumbBarView.swift */; };
 		E00300020000000000000002 /* RetroLCDDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E00300010000000000000002 /* RetroLCDDisplayView.swift */; };
@@ -291,6 +292,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E00100010000000000000021 /* SpatialEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Source/AudioCore/SpatialEngine.h"; sourceTree = "<group>"; };
+		E00100010000000000000022 /* SpatialEngine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "Source/AudioCore/SpatialEngine.cpp"; sourceTree = "<group>"; };
 		E00100010000000000000010 /* ISidEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Source/AudioCore/ISidEngine.h"; sourceTree = "<group>"; };
 		E00100010000000000000011 /* EngineSidplayFP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Source/AudioCore/EngineSidplayFP.h"; sourceTree = "<group>"; };
 		E00100010000000000000012 /* EngineSidplayFP.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "Source/AudioCore/EngineSidplayFP.cpp"; sourceTree = "<group>"; };
@@ -1391,6 +1394,8 @@
 				1F4386260CEEFD8E00654EA1 /* AudioCoreDriver.cpp */,
 				1F4C4FC60D79EFD800214775 /* PlayerLibSidplay.h */,
 				1F4C4FC50D79EFD800214775 /* PlayerLibSidplay.cpp */,
+				E00100010000000000000021 /* SpatialEngine.h */,
+				E00100010000000000000022 /* SpatialEngine.cpp */,
 				1FD084D50CEF2B9D0075D3A1 /* AudioDriver.h */,
 				1F3896790CEE3C5F00942B17 /* AudioQueueDriver.h */,
 				1F3896780CEE3C5F00942B17 /* AudioQueueDriver.cpp */,
@@ -1607,6 +1612,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E00100020000000000000022 /* SpatialEngine.cpp in Sources */,
 				E00100020000000000000012 /* EngineSidplayFP.cpp in Sources */,
 				E00300020000000000000001 /* BreadcrumbBarView.swift in Sources */,
 				E00300020000000000000002 /* RetroLCDDisplayView.swift in Sources */,
