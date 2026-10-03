@@ -29,6 +29,10 @@ public struct SIDInspectorView: View {
         self._isPresented = isPresented
         self.telemetry = player.registerTelemetry
     }
+    private var isMultiSID: Bool {
+        guard player.isTuneLoaded, let meta = player.metadata else { return false }
+        return meta.sidChipCount > 1
+    }
     
     public var body: some View {
         VStack(spacing: 0) {
@@ -411,75 +415,114 @@ public struct SIDInspectorView: View {
                     // MARK: - 5. Spatial Audio & Stereo Width
                     DisclosureGroup(isExpanded: $spatialExpanded) {
                         VStack(alignment: .leading, spacing: 10) {
-                            // Stereo Width Slider
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack {
-                                    Text("Stereo Width:")
-                                        .font(.system(size: 10, weight: .semibold))
+                            if !isMultiSID {
+                                HStack(alignment: .top, spacing: 5) {
+                                    Image(systemName: "info.circle")
+                                        .font(.system(size: 10))
                                         .foregroundColor(.secondary)
-                                    Spacer()
-                                    Text(stereoWidthLabel(player.stereoWidth))
-                                        .font(.system(size: 10, weight: .medium, design: .monospaced))
-                                        .foregroundColor(player.stereoWidth > 1.05 ? .accentColor : .primary)
-                                }
-                                FixedSizeSlider(
-                                    value: $player.stereoWidth,
-                                    in: 0.0...3.0,
-                                    trackHeight: 4,
-                                    knobSize: 12
-                                )
-                                HStack {
-                                    Text("Mono")
-                                        .font(.system(size: 8))
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    Text("Native")
-                                        .font(.system(size: 8))
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    Text("+200%")
-                                        .font(.system(size: 8))
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            
-                            Divider()
-                                .padding(.vertical, 2)
-                            
-                            // Mono Bass Anchor Toggle
-                            Toggle(isOn: $player.bassAnchorEnabled) {
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text("Mono Bass Anchor (180 Hz)")
-                                        .font(.system(size: 10, weight: .semibold))
-                                    Text("Centers sub-bass on headphones")
+                                        .padding(.top, 1)
+                                    Text("Mono (1SID) Tune — Spatial stereo width and bass anchoring require multi-SID audio (2SID / 3SID).")
                                         .font(.system(size: 9))
                                         .foregroundColor(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
+                                .padding(6)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.primary.opacity(0.04))
+                                .cornerRadius(4)
                             }
-                            .toggleStyle(.checkbox)
                             
-                            // Reset Button
-                            HStack {
-                                Spacer()
-                                Button(action: {
-                                    player.resetSpatialSettings()
-                                }) {
-                                    Text("Reset Spatial")
-                                        .font(.system(size: 10))
+                            VStack(alignment: .leading, spacing: 10) {
+                                // Stereo Width Slider
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack {
+                                        Text("Stereo Width:")
+                                            .font(.system(size: 10, weight: .semibold))
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Text(stereoWidthLabel(player.stereoWidth))
+                                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                                            .foregroundColor(isMultiSID && player.stereoWidth > 1.05 ? .accentColor : .primary)
+                                    }
+                                    FixedSizeSlider(
+                                        value: $player.stereoWidth,
+                                        in: 0.0...3.0,
+                                        trackHeight: 4,
+                                        knobSize: 12
+                                    )
+                                    HStack {
+                                        Text("Mono")
+                                            .font(.system(size: 8))
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Text("Native")
+                                            .font(.system(size: 8))
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Text("+200%")
+                                            .font(.system(size: 8))
+                                            .foregroundColor(.secondary)
+                                    }
                                 }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                                .disabled(player.stereoWidth == 1.0 && player.bassAnchorEnabled)
+                                
+                                Divider()
+                                    .padding(.vertical, 2)
+                                
+                                // Mono Bass Anchor Toggle
+                                Toggle(isOn: $player.bassAnchorEnabled) {
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text("Mono Bass Anchor (180 Hz)")
+                                            .font(.system(size: 10, weight: .semibold))
+                                        Text("Centers sub-bass on headphones")
+                                            .font(.system(size: 9))
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                .toggleStyle(.checkbox)
+                                
+                                // Reset Button
+                                HStack {
+                                    Spacer()
+                                    Button(action: {
+                                        player.resetSpatialSettings()
+                                    }) {
+                                        Text("Reset Spatial")
+                                            .font(.system(size: 10))
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.small)
+                                    .disabled(!isMultiSID || (player.stereoWidth == 1.0 && player.bassAnchorEnabled))
+                                }
+                                .padding(.top, 2)
                             }
-                            .padding(.top, 2)
+                            .disabled(!isMultiSID)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.top, 4)
                     } label: {
-                        HStack(spacing: 5) {
+                        HStack(spacing: 6) {
                             Text("Spatial Audio")
                                 .font(.system(size: 11, weight: .bold))
-                            if player.stereoWidth != 1.0 || player.bassAnchorEnabled {
+                            
+                            if isMultiSID {
+                                Text("Stereo (\(player.metadata?.sidChipCount ?? 2)SID)")
+                                    .font(.system(size: 9, weight: .semibold))
+                                    .foregroundColor(.accentColor)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 1)
+                                    .background(Color.accentColor.opacity(0.12))
+                                    .cornerRadius(3)
+                            } else if player.isTuneLoaded {
+                                Text("Mono (1SID)")
+                                    .font(.system(size: 9, weight: .medium))
+                                    .foregroundColor(.secondary)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 1)
+                                    .background(Color.primary.opacity(0.06))
+                                    .cornerRadius(3)
+                            }
+                            
+                            if isMultiSID && (player.stereoWidth != 1.0 || player.bassAnchorEnabled) {
                                 Circle()
                                     .fill(Color.accentColor)
                                     .frame(width: 5, height: 5)
