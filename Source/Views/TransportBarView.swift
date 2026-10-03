@@ -16,6 +16,7 @@ public struct TransportBarView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @State private var fastForwardSpeed: Double = 1.0
+    @State private var isVolumeExpanded: Bool = false
     @FocusState private var isSearchFocused: Bool
     
     @MainActor
@@ -146,42 +147,48 @@ public struct TransportBarView: View {
                     .help(library.isRepeatEnabled ? "Repeat: ON" : "Repeat: OFF")
                 }
                 
-                // Fast Forward Slider (♫ ---●--- ♫♫)
-                HStack(spacing: 2) {
-                    Image(systemName: "music.note")
-                        .font(.system(size: 8))
-                        .foregroundColor(fastForwardSpeed <= 1.05 ? .secondary : .accentColor)
-                        .help("Normal Speed (1.0x)")
-                    
-                    FixedSizeSlider(
-                        value: Binding(
-                            get: { fastForwardSpeed },
-                            set: { newVal in
-                                fastForwardSpeed = newVal
-                                player.tempo = Int(round(newVal * 100))
-                            }
-                        ),
-                        in: 1.0...5.0,
-                        trackHeight: 3.5,
-                        knobSize: 11,
-                        activeColor: fastForwardSpeed > 1.05 ? .accentColor : .secondary.opacity(0.4),
-                        onEditingChanged: { isEditing in
-                            if !isEditing {
-                                withAnimation(.spring(response: 0.22, dampingFraction: 0.8)) {
-                                    fastForwardSpeed = 1.0
+                // Fast Forward Slider (♫ ---●--- ♫♫) - Collapses when volume is expanded to prevent capsule border overflow
+                if !isVolumeExpanded {
+                    HStack(spacing: 2) {
+                        Image(systemName: "music.note")
+                            .font(.system(size: 8))
+                            .foregroundColor(fastForwardSpeed <= 1.05 ? .secondary : .accentColor)
+                            .help("Normal Speed (1.0x)")
+                        
+                        FixedSizeSlider(
+                            value: Binding(
+                                get: { fastForwardSpeed },
+                                set: { newVal in
+                                    fastForwardSpeed = newVal
+                                    player.tempo = Int(round(newVal * 100))
                                 }
-                                player.tempo = 100
+                            ),
+                            in: 1.0...5.0,
+                            trackHeight: 3.5,
+                            knobSize: 11,
+                            activeColor: fastForwardSpeed > 1.05 ? .accentColor : .secondary.opacity(0.4),
+                            onEditingChanged: { isEditing in
+                                if !isEditing {
+                                    withAnimation(.spring(response: 0.22, dampingFraction: 0.8)) {
+                                        fastForwardSpeed = 1.0
+                                    }
+                                    player.tempo = 100
+                                }
                             }
-                        }
-                    )
-                    .frame(width: 52)
-                    .disabled(!player.isTuneLoaded)
-                    .help(fastForwardSpeed > 1.05 ? String(format: "Fast Forward: %.1fx", fastForwardSpeed) : "Fast Forward Slider")
-                    
-                    Image(systemName: "music.quarternote.3")
-                        .font(.system(size: 8))
-                        .foregroundColor(fastForwardSpeed > 1.05 ? .accentColor : .secondary)
-                        .help("Fast Forward (up to 5.0x)")
+                        )
+                        .frame(width: 52)
+                        .disabled(!player.isTuneLoaded)
+                        .help(fastForwardSpeed > 1.05 ? String(format: "Fast Forward: %.1fx", fastForwardSpeed) : "Fast Forward Slider")
+                        
+                        Image(systemName: "music.quarternote.3")
+                            .font(.system(size: 8))
+                            .foregroundColor(fastForwardSpeed > 1.05 ? .accentColor : .secondary)
+                            .help("Fast Forward (up to 5.0x)")
+                    }
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.8, anchor: .leading).combined(with: .opacity),
+                        removal: .scale(scale: 0.8, anchor: .leading).combined(with: .opacity)
+                    ))
                 }
                 
                 Spacer(minLength: 6)
@@ -193,12 +200,13 @@ public struct TransportBarView: View {
                 Spacer(minLength: 6)
                 
                 // MARK: Right: Apple Music Inline Expandable Volume Control
-                CapsuleVolumeControl(player: player)
+                CapsuleVolumeControl(player: player, isExpanded: $isVolumeExpanded)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 4)
-            .frame(minWidth: 640, maxWidth: 880)
+            .frame(minWidth: 480, maxWidth: 880)
             .frame(height: 44)
+            .clipShape(Capsule())
             .background(
                 Capsule()
                     .fill(Color(NSColor.controlBackgroundColor).opacity(colorScheme == .dark ? 0.35 : 0.50))
@@ -332,8 +340,13 @@ public struct TransportBarView: View {
 // MARK: - Apple Music Style Inline Expandable Volume Control
 public struct CapsuleVolumeControl: View {
     @ObservedObject var player: SIDPlayer
-    @State private var isExpanded: Bool = false
+    @Binding var isExpanded: Bool
     @State private var lastNonZeroVolume: Float = 0.8
+    
+    public init(player: SIDPlayer, isExpanded: Binding<Bool>) {
+        self.player = player
+        self._isExpanded = isExpanded
+    }
     
     private var volumeIconName: String {
         if player.volume == 0 {
@@ -374,7 +387,7 @@ public struct CapsuleVolumeControl: View {
             .help(isExpanded ? "Collapse Volume (Option-Click to Mute)" : "Volume: \(Int(player.volume * 100))% (Click to adjust)")
             
             if isExpanded {
-                HStack(spacing: 6) {
+                HStack(spacing: 4) {
                     FixedSizeSlider(
                         value: $player.volume,
                         in: 0.0...1.0,
@@ -382,13 +395,13 @@ public struct CapsuleVolumeControl: View {
                         knobSize: 11,
                         activeColor: player.volume == 0 ? .secondary : .accentColor
                     )
-                    .frame(width: 72)
+                    .frame(width: 64)
                     .help("Volume: \(Int(player.volume * 100))%")
                     
                     Text("\(Int(player.volume * 100))%")
                         .font(.system(size: 10, weight: .medium, design: .monospaced))
                         .foregroundColor(.secondary)
-                        .frame(width: 28, alignment: .trailing)
+                        .frame(width: 26, alignment: .trailing)
                 }
                 .transition(.asymmetric(
                     insertion: .scale(scale: 0.8, anchor: .trailing).combined(with: .opacity),

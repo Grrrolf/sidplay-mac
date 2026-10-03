@@ -56,8 +56,8 @@ public struct RetroLCDDisplayView: View {
                             .lineLimit(1)
                             .truncationMode(.tail)
                     }
-                    .frame(minWidth: 50, maxWidth: .infinity, alignment: .leading)
-                    .layoutPriority(1)
+                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                    .layoutPriority(0)
                     
                     Spacer(minLength: 4)
                     
