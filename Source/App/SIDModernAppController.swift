@@ -270,8 +270,11 @@ public final class SIDModernAppController: NSObject {
     public func presentMainWindow() {
         if let existing = window {
             positionAndClampWindow(existing)
-            existing.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
+            DispatchQueue.main.async {
+                existing.makeKeyAndOrderFront(nil)
+                NSApp.activate(ignoringOtherApps: true)
+                NSRunningApplication.current.activate(options: [.activateAllWindows])
+            }
             return
         }
         
@@ -294,11 +297,13 @@ public final class SIDModernAppController: NSObject {
         newWindow.minSize = NSSize(width: 900, height: 580)
         
         positionAndClampWindow(newWindow)
-        
-        newWindow.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
-        
         self.window = newWindow
+        
+        DispatchQueue.main.async {
+            newWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            NSRunningApplication.current.activate(options: [.activateAllWindows])
+        }
     }
     
     public func clampCurrentWindow() {

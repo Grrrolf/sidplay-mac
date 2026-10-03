@@ -16,7 +16,6 @@ public struct TransportBarView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @State private var fastForwardSpeed: Double = 1.0
-    @State private var showVolumePopover: Bool = false
     @FocusState private var isSearchFocused: Bool
     
     @MainActor
@@ -57,19 +56,6 @@ public struct TransportBarView: View {
             return library.searchScope == .hvsc ? Color.accentColor.opacity(0.40) : Color.primary.opacity(0.20)
         }
     }
-    
-    private var volumeIconName: String {
-        if player.volume == 0 {
-            return "speaker.slash.fill"
-        } else if player.volume < 0.33 {
-            return "speaker.wave.1.fill"
-        } else if player.volume < 0.66 {
-            return "speaker.wave.2.fill"
-        } else {
-            return "speaker.wave.3.fill"
-        }
-    }
-    
     public var body: some View {
         HStack(spacing: 12) {
             // Invisible balanced spacer matching the search bar width (~135 pt)
@@ -206,56 +192,8 @@ public struct TransportBarView: View {
                 
                 Spacer(minLength: 6)
                 
-                // MARK: Right: Speaker Icon with Volume Slider Popover
-                HStack(spacing: 3) {
-                    // Speaker Icon with Volume Slider Popover (Apple Music Volume)
-                    Button(action: {
-                        showVolumePopover.toggle()
-                    }) {
-                        Image(systemName: volumeIconName)
-                    }
-                    .buttonStyle(AppleMusicGlyphButtonStyle(
-                        iconSize: 13,
-                        frameSize: 28,
-                        isActive: showVolumePopover || player.volume == 0
-                    ))
-                    .focusable(false)
-                    .popover(isPresented: $showVolumePopover, arrowEdge: .bottom) {
-                        HStack(spacing: 8) {
-                            Button(action: {
-                                if player.volume > 0 {
-                                    player.volume = 0
-                                } else {
-                                    player.volume = 0.8
-                                }
-                            }) {
-                                Image(systemName: player.volume == 0 ? "speaker.slash.fill" : "speaker.fill")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(player.volume == 0 ? .accentColor : .secondary)
-                            }
-                            .buttonStyle(.plain)
-                            .focusable(false)
-                            .focusEffectDisabled()
-                            .help(player.volume == 0 ? "Unmute" : "Mute")
-                            
-                            FixedSizeSlider(value: $player.volume, in: 0.0...1.0, trackHeight: 4, knobSize: 12)
-                                .frame(width: 120)
-                                .help("Volume: \(Int(player.volume * 100))%")
-                            
-                            Image(systemName: "speaker.wave.3.fill")
-                                .font(.system(size: 11))
-                                .foregroundColor(.secondary)
-                            
-                            Text("\(Int(player.volume * 100))%")
-                                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                                .frame(width: 32, alignment: .trailing)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                    }
-                    .help("Volume: \(Int(player.volume * 100))% (Click to adjust)")
-                }
+                // MARK: Right: Apple Music Inline Expandable Volume Control
+                CapsuleVolumeControl(player: player)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 4)
@@ -390,6 +328,85 @@ public struct TransportBarView: View {
     }
 }
 
+
+// MARK: - Apple Music Style Inline Expandable Volume Control
+public struct CapsuleVolumeControl: View {
+    @ObservedObject var player: SIDPlayer
+    @State private var isExpanded: Bool = false
+    @State private var lastNonZeroVolume: Float = 0.8
+    
+    private var volumeIconName: String {
+        if player.volume == 0 {
+            return "speaker.slash.fill"
+        } else if player.volume < 0.33 {
+            return "speaker.wave.1.fill"
+        } else if player.volume < 0.66 {
+            return "speaker.wave.2.fill"
+        } else {
+            return "speaker.wave.3.fill"
+        }
+    }
+    
+    public var body: some View {
+        HStack(spacing: 4) {
+            Button(action: {
+                if NSEvent.modifierFlags.contains(.option) {
+                    toggleMute()
+                } else if player.volume == 0 && !isExpanded {
+                    toggleMute()
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        isExpanded = true
+                    }
+                } else {
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        isExpanded.toggle()
+                    }
+                }
+            }) {
+                Image(systemName: volumeIconName)
+            }
+            .buttonStyle(AppleMusicGlyphButtonStyle(
+                iconSize: 13,
+                frameSize: 28,
+                isActive: isExpanded || player.volume == 0
+            ))
+            .focusable(false)
+            .help(isExpanded ? "Collapse Volume (Option-Click to Mute)" : "Volume: \(Int(player.volume * 100))% (Click to adjust)")
+            
+            if isExpanded {
+                HStack(spacing: 6) {
+                    FixedSizeSlider(
+                        value: $player.volume,
+                        in: 0.0...1.0,
+                        trackHeight: 3.5,
+                        knobSize: 11,
+                        activeColor: player.volume == 0 ? .secondary : .accentColor
+                    )
+                    .frame(width: 72)
+                    .help("Volume: \(Int(player.volume * 100))%")
+                    
+                    Text("\(Int(player.volume * 100))%")
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .frame(width: 28, alignment: .trailing)
+                }
+                .transition(.asymmetric(
+                    insertion: .scale(scale: 0.8, anchor: .trailing).combined(with: .opacity),
+                    removal: .scale(scale: 0.8, anchor: .trailing).combined(with: .opacity)
+                ))
+            }
+        }
+    }
+    
+    private func toggleMute() {
+        if player.volume > 0 {
+            lastNonZeroVolume = player.volume
+            player.volume = 0
+        } else {
+            player.volume = lastNonZeroVolume > 0.05 ? lastNonZeroVolume : 0.8
+        }
+    }
+}
 
 // MARK: - Apple Music Style Borderless Transport Button Style
 public struct AppleMusicGlyphButtonStyle: ButtonStyle {

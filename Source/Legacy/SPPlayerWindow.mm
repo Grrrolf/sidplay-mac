@@ -120,6 +120,18 @@ NSString* SPUrlRequestUserAgentString = nil;
 - (void) playTuneAtPath:(NSString*)path subtune:(int)subtuneIndex
 // ----------------------------------------------------------------------------
 {
+	Class modernController = NSClassFromString(@"SPSwiftModernAppController");
+	if (modernController) {
+		SEL openSel = NSSelectorFromString(@"openFileWithPath:");
+		if ([modernController respondsToSelector:openSel]) {
+			((void (*)(id, SEL, NSString*))objc_msgSend)(modernController, openSel, path);
+			return;
+		}
+	}
+
+	if (player == NULL)
+		return;
+
 	if (audioDriver != NULL)
 		gPreferences.mPlaybackSettings.mFrequency = audioDriver->getSampleRate();
 	
@@ -910,6 +922,39 @@ NSString* SPUrlRequestUserAgentString = nil;
 - (IBAction) openFile:(id)sender
 // ----------------------------------------------------------------------------
 {
+	Class modernController = NSClassFromString(@"SPSwiftModernAppController");
+	if (modernController) {
+		NSOpenPanel* openPanel = [NSOpenPanel openPanel];
+		openPanel.allowedFileTypes = [NSArray arrayWithObjects:@"sid", @"prg", @"mid", @"mus", @"str", nil];
+		openPanel.allowsMultipleSelection = YES;
+		openPanel.canChooseDirectories = YES;
+		openPanel.canChooseFiles = YES;
+
+		NSWindow* targetWin = nil;
+		SEL winSel = NSSelectorFromString(@"currentMainWindow");
+		if ([modernController respondsToSelector:winSel]) {
+			targetWin = ((NSWindow* (*)(id, SEL))objc_msgSend)(modernController, winSel);
+		}
+
+		void (^handler)(NSModalResponse) = ^(NSModalResponse result) {
+			if (result == NSModalResponseOK) {
+				SEL openSel = NSSelectorFromString(@"openFileWithPath:");
+				if ([modernController respondsToSelector:openSel]) {
+					for (NSURL* url in openPanel.URLs) {
+						((void (*)(id, SEL, NSString*))objc_msgSend)(modernController, openSel, [url path]);
+					}
+				}
+			}
+		};
+
+		if (targetWin != nil && [targetWin isVisible]) {
+			[openPanel beginSheetModalForWindow:targetWin completionHandler:handler];
+		} else {
+			[openPanel beginWithCompletionHandler:handler];
+		}
+		return;
+	}
+
 	if (![self isVisible])
 		return;
 
@@ -1166,11 +1211,16 @@ NSString* SPUrlRequestUserAgentString = nil;
 		SEL showSel = NSSelectorFromString(@"showMainWindow");
 		if ([modernController respondsToSelector:showSel]) {
 			if (audioDriver != NULL) {
+				if (player != NULL) {
+					player->setAudioDriver(NULL);
+					delete player;
+					player = NULL;
+				}
 				delete audioDriver;
 				audioDriver = NULL;
 			}
-			((void (*)(id, SEL))objc_msgSend)(modernController, showSel);
 			[self orderOut:self];
+			((void (*)(id, SEL))objc_msgSend)(modernController, showSel);
 			return;
 		}
 	}
